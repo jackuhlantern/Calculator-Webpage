@@ -1,0 +1,253 @@
+<!-- html -->
+
+<div class="base">
+  <div class="screen">
+    <div id="screen">0</div>
+    <div class="current"></div>
+  </div>
+
+  <div class="grid">
+
+    <button class="btn clr all">AC</button>
+    <button class="btn clr e">CE</button>
+    <button class="btn eq">=</button>
+    <button class="btn op">/</button>
+    <button class="btn n">7</button>
+    <button class="btn n">8</button>
+    <button class="btn n">9</button>
+    <button class="btn op">x</button>
+    <button class="btn n">4</button>
+    <button class="btn n">5</button>
+    <button class="btn n">6</button>
+    <button class="btn op">-</button>
+    <button class="btn n">1</button>
+    <button class="btn n">2</button>
+    <button class="btn n">3</button>
+    <button class="btn op plus">+</button><br>
+    <button class="btn n">0</button>
+    <button class="btn dec">.</button>
+    <button class="btn neg">+/-</button>
+  </div>
+</div>
+
+<style>
+body {
+  background-color: #555555;
+}
+
+.base {
+  position: absolute;
+  background-color: #0003FF;
+  left: 40%;
+  top: 4%;
+  width: 26em;
+  height: 32em;
+  border: solid #0099CC 1em;
+  border-bottom-color: #000344;
+  border-right-color: #000344;
+  border-radius: 10px;
+}
+
+.screen {
+  position: relative;
+  left: 10%;
+  top: 4%;
+  background-color: black;
+  width: 9em;
+  height: 2em;
+  color: lime;
+  font-size: 36px;
+  text-align: right;
+  padding: 0.1em;
+  font-family: Sans-serif;
+  border: solid #0099CC 0.13em;
+  border-top-color: #000344;
+  border-left-color: #000344;
+}
+
+.current {
+  font-size: 16px;
+}
+
+.btn {
+  background-color: gray;
+  position: relative;
+  left: -0.2em;
+  height: 1.5em;
+  width: 2em;
+  margin: .3em;
+  font-size: 36px;
+}
+
+.clr {
+  background-color: red;
+  color: white;
+  border-color: #FFAAAA;
+  border-bottom-color: #443000;
+  border-right-color: #443000;
+}
+
+.grid {
+  position: relative;
+  top: 5%;
+  left: 5%;
+}
+
+.plus {
+  height: 3.6em;
+  position: absolute;
+  left: 7.93em;
+}
+
+.eq {
+  background-color: green;
+  color: white;
+  border-color: #AAFFAA;
+  border-bottom-color: #004400;
+  border-right-color: #004400;
+}
+</style>
+
+<script>
+$(document).ready(function(){
+  var total = 0; //running total
+var op = ''; //current operation
+var nodec = true; //'.' has not been pushed
+var clear = true; //the screen is clear
+var num = ''; //string that number buttons will be added to when pushed
+var last = ''; //for current class
+var opOn = false; //
+
+function calculate() {
+  switch (op) {
+    case '/':
+      total /= num;
+      break;
+    case '-':
+      total -= num;
+      break;
+    case 'x':
+      total *= num;
+      break;
+    case '+':
+      total = parseFloat(total) + parseFloat(num);
+      break;
+    default:
+      total = num;
+  }
+  total = Math.round(total * 100) / 100;
+  if (total == Infinity) {
+    total = "ERROR";
+  } else if (total > 9999999999999) {
+    total = total.toExponential(2);
+    last = total.toString();
+  }
+  $('#screen').text(total);
+  clear = true;
+  nodec = true;
+}
+
+function offscreen() {
+  if (last.length > 34) {
+    last = "(...)";
+    $('.current').text(last);
+  }
+}
+
+//'+/-' button
+$('.neg').click(function() {
+  if (num > 0 && op === '') {
+    total = -(total);
+    num = '-' + num;
+    last = '-' + last;
+    $('#screen').prepend('-');
+    $('.current').text(last);
+  } else if (num < 0 && op === '') {
+    total = -(total);
+    num = num.replace('-', '');
+    $('#screen').text(num);
+    last = last.replace('-', '');
+    $('.current').text(last);
+  }
+  
+});
+//what happens when you click a number
+$('.n').click(function() {
+  n = $(this).text();
+  if (num.length > 15) {} //no room left on screen
+  else if (clear === true) { //screen was just cleared or op/= was pushed
+    $('#screen').text(n);
+    $('.current').append(n);
+    clear = false;
+    num = n;
+    if (op === '') {
+      last = '';
+    }
+  } else {
+    $('#screen').append(n);
+    $('.current').append(n);
+    offscreen();
+    num += n;
+  }
+  last += n;
+  opOn = false;
+});
+//both clear buttons do this
+$('.clr').click(function() {
+  $('#screen').text('0');
+  last = last.replace(num, '');
+  $('.current').text(last);
+  nodec = true;
+  clear = true;
+  num = '0';
+});
+//all clear resets the total & operation
+$('.all').click(function() {
+  $('.current').text('');
+  last = '';
+  total = 0;
+  op = '';
+});
+//'=' button
+$('.eq').click(function() {
+  if (!opOn) {
+    calculate();
+    num = $('#screen').text();
+    op = '';
+    last = num;
+    clear = true;
+  }
+});
+//'.' button; avoids '...4' for example
+$('.dec').click(function() {
+  if (nodec === true) {
+    if (clear === true) {
+      $('#screen').text('0.');
+      $('.current').append('0.');
+    } else {
+      $('#screen').append('.');
+      $('.current').append('.');
+    }
+    num += '.';
+    last += '.';
+    nodec = false;
+    clear = false;
+  }
+});
+
+//operations (*,/,-,+)
+$('.op').click(function() {
+  if (!opOn) {
+    calculate();
+    num = '';
+    op = $(this).text();
+    if (op === '/' || op === 'x') {
+      last = '(' + last + ')';  
+    }
+    last += op;
+    $('.current').text(last);
+    opOn = true;
+  }
+ });
+});
+</script>
